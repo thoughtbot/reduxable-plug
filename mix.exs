@@ -28,6 +28,11 @@ defmodule ReduxablePlug.Mixfile do
   #
   # Type "mix help deps" for more examples and options
   defp deps do
-    []
+    [
+      {:plug, "~> 1.3"},
+      {:bypass, "~> 0.6", only: :test},
+      {:httpoison, "~> 0.11.1"},
+      {:poison, "~> 3.1"}
+    ]
   end
 end
