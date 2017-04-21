@@ -20,9 +20,16 @@ defmodule ReduxablePlug do
 
   defp extract_event_payload(conn) do
     %{
-      type: "#{conn.method} #{conn.request_path}",
+      type: controller_action(conn),
       params: conn.params
     }
+  end
+
+  defp controller_action(conn) do
+    controller = conn.private.phoenix_controller
+      |> to_string()
+      |> String.replace(~r/^Elixir\./, "")
+    "#{controller}##{conn.private.phoenix_action}"
   end
 
   defp endpoint do

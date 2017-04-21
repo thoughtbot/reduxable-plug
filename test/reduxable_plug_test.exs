@@ -16,6 +16,8 @@ defmodule ReduxablePlugTest do
   test "sends the payload to reduxable", %{bypass: bypass} do
     set_redux_identifier "identifier123"
     conn = build_conn(:get, "/users", %{name: "Joe"})
+      |> Plug.Conn.put_private(:phoenix_controller, MyApp.Web.FooController)
+      |> Plug.Conn.put_private(:phoenix_action, :new)
       |> ReduxablePlug.put_client_identifier("user123")
     stub_action_endpoint(bypass)
 
@@ -24,9 +26,24 @@ defmodule ReduxablePlugTest do
     conn = get_request_to_action_endpoint()
     assert conn.request_path == "/pipeline/actions"
     assert conn.method == "POST"
-    assert conn.params == %{"type" => "GET /users", "params" => %{"name" => "Joe"}}
+    assert conn.params == %{"type" => "MyApp.Web.FooController#new", "params" => %{"name" => "Joe"}}
     assert reduxable_identifier(conn) == "identifier123"
     assert reduxable_client_identifier(conn) == "user123"
+  end
+
+  test "only removes Elixir. from beginning of module name", %{bypass: bypass} do
+    set_redux_identifier "identifier123"
+    conn = build_conn(:get, "/users", %{name: "Joe"})
+      |> Plug.Conn.put_private(:phoenix_controller, MyApp.AwesomeElixir.FooController)
+      |> Plug.Conn.put_private(:phoenix_action, :new)
+      |> ReduxablePlug.put_client_identifier("user123")
+
+    stub_action_endpoint(bypass)
+
+    ReduxablePlug.call(conn, %{})
+
+    conn = get_request_to_action_endpoint()
+    assert conn.params == %{"type" => "MyApp.AwesomeElixir.FooController#new", "params" => %{"name" => "Joe"}}
   end
 
   def set_redux_identifier(identifier) do
