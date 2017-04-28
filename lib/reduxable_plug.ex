@@ -7,14 +7,16 @@ defmodule ReduxablePlug do
   end
 
   def call(conn, _opts) do
-    payload = conn |> extract_event_payload
-    HTTPoison.post endpoint() <> "pipeline/actions",
-      Poison.encode!(payload),
-      [
-        {"Content-Type", "application/json"},
-        {"reduxable-identifier", identifier()},
-        {"reduxable-client-identifier", get_client_identifier(conn)}
-      ]
+    ReduxablePlug.BackgroundJob.send fn() ->
+      payload = conn |> extract_event_payload
+      HTTPoison.post endpoint() <> "pipeline/actions",
+        Poison.encode!(payload),
+        [
+          {"Content-Type", "application/json"},
+          {"reduxable-identifier", identifier()},
+          {"reduxable-client-identifier", get_client_identifier(conn)}
+        ]
+      end
     conn
   end
 
